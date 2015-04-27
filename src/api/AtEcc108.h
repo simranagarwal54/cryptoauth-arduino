@@ -40,7 +40,11 @@ public:
   uint8_t verify(uint8_t *data, int len_32,
                  uint8_t *pub_key,
                  uint8_t *signature);
+  uint8_t hash_verify(const uint8_t *data, int len,
+                 uint8_t *pub_key,
+                 uint8_t *signature);
   uint8_t getPubKey(const uint8_t KEY_ID);
+  uint8_t getSerialNumber(void);
 
 
 

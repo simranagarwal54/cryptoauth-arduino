@@ -1,5 +1,5 @@
-/* -*- mode: c++; c-file-style: "gnu" -*-
- * Copyright (C) 2014 Cryptotronix, LLC.
+/* -*- mode: c++; c-file-style: "gnu" -*- Copyright (C) 2014
+ * Cryptotronix, LLC.
  *
  * This file is part of cryptoauth-arduino.
  *
@@ -21,6 +21,7 @@
 #include "../atecc108-atmel/ecc108_physical.h"
 #include "../atecc108-atmel/ecc108_comm_marshaling.h"
 #include "../atecc108-atmel/ecc108_lib_return_codes.h"
+#include "../softcrypto/sha256.h"
 
 
 static const uint8_t default_config_zone[] =
@@ -553,11 +554,42 @@ uint8_t AtEcc108::verify(uint8_t *data, int len_32,
 
   if ((ret_code = this->load_nonce(data, len_32)) == ECC108_SUCCESS)
     {
+      Serial.print("\nNonce Loaded");
       ret_code = this->verify_tempkey(0, pub_key, signature);
     }
+  else
+    Serial.print("\nNonce failed to Loaded");
 
   return ret_code;
 }
+
+uint8_t
+AtEcc108::hash_verify(const uint8_t *data, int len, uint8_t *pub_key,
+                      uint8_t *signature)
+{
+
+  sha256_hash_t digest;
+  sha256(&digest, data, len);
+
+  Serial.write("\n");
+  for (int i = 0; i < len; i++)
+    {
+      static char tmp[4] = {};
+      if (i > 0)
+        Serial.write(" ");
+
+      sprintf(tmp, "0x%02X", digest[i]);
+      Serial.write(tmp);
+    }
+
+  Serial.write("\n");
+
+
+  return this->verify (&digest[0], sizeof(digest), pub_key, signature);
+
+}
+
+
 
 void AtEcc108::disableIdleWake()
 {
@@ -569,4 +601,39 @@ void AtEcc108::enableIdleWake()
 {
   this->always_idle = true;
   this->always_wakeup = true;
+}
+
+
+uint8_t AtEcc108::getSerialNumber(void)
+{
+
+  uint8_t *rsp_ptr = &this->temp[ECC108_BUFFER_POS_DATA];
+
+  this->rsp.clear();
+
+  uint8_t ret_code = this->wakeup();
+
+  if (ret_code != ECC108_SUCCESS)
+    return ret_code;
+
+  memset(this->temp, 0, sizeof(this->temp));
+
+  uint8_t config_address = 0;
+
+  ret_code = ecc108m_execute(ECC108_READ,
+                             ECC108_ZONE_CONFIG | ECC108_ZONE_COUNT_FLAG,
+                             config_address >> 2,
+                             0, NULL, 0, NULL, 0, NULL, sizeof(this->command),
+                             this->command,
+                             sizeof(this->temp), this->temp);
+
+
+  const uint8_t SERIAL_NUM_LENGTH = 9;
+
+  if (0 == ret_code)
+    this->rsp.copyBufferFrom(rsp_ptr, VERIFY_256_KEY_SIZE);
+
+  this->idle();
+
+  return ret_code;
 }
