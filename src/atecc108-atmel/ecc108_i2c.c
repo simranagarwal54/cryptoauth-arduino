@@ -37,7 +37,7 @@
 *
 * \atmel_crypto_device_library_license_stop
  */
-#define ECC108_GPIO_WAKEUP
+//#define ECC108_GPIO_WAKEUP
 
 #ifdef ECC108_GPIO_WAKEUP
 #   include <avr/io.h>					//!< GPIO definitions
