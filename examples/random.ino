@@ -1,23 +1,27 @@
-#include <AtSha204.h>
-#include <AtEcc108.h>
+#include <cryptoauth.h>
 
+// Change to AtSha204() to use the 204
 AtEcc108 sha = AtEcc108();
 
 void setup() {
-    // put your setup code here, to run once:
     Serial.begin(9600);
     sha.enableDebug(&Serial);
-
-
 }
 
 void loop() {
-    if (0 == sha.getRandom()){
+    /* If you haven't personalized your device yet, you will recieve
+     * this on your serial terminal:
+       ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000ffff0000
+       Success
+
+       Otherwise, you'll get actual random bytes.
+    */
+    if (0 == sha.getRandom(0)){
         Serial.println("Success");
         sha.rsp.dumpHex(&Serial);
     }
     else{
-        Serial.println("Failue");
+        Serial.println("Failure");
     }
 
     delay(1000);
